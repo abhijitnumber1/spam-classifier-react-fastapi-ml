@@ -3,7 +3,7 @@
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",
-	"homepage": "https://abhijitnumber1.github.io/spam-classifier-react-fastapi-ml/",
+	"homepage": "https://abhijitnumber1.github.io/spam-classifier-react-fastapi-ml",
 	"scripts": {
 		"predeploy": "npm run build",
 		"deploy": "gh-pages -d dist",
