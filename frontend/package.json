@@ -3,14 +3,13 @@
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",
-	"homepage": "https://abhijitnumber1.github.io/spam-classifier/",
+	"homepage": "https://abhijitnumber1.github.io/spam-classifier-react-fastapi-ml/",
 	"scripts": {
-		"start": "react-scripts start",
-		"build": "react-scripts build",
-		"test": "react-scripts test",
-		"eject": "react-scripts eject",
 		"predeploy": "npm run build",
-		"deploy": "gh-pages -d build"
+		"deploy": "gh-pages -d dist",
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview"
 	},
 	"dependencies": {
 		"axios": "^1.12.2",
