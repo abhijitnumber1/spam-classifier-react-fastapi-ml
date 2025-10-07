@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useState } from "react";
-const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const apiBase = import.meta.env.VITE_DOMAIN_NAME || "http://localhost:8000";
 
 const DetectorForm = () => {
 	const [message, setmessage] = useState<string>("");

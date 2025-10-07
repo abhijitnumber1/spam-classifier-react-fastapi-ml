@@ -1,39 +1,106 @@
-name: Deploy FastAPI (PM2)
+name: FastAPI Deployment Pipeline
 
 on:
     push:
         branches:
             - main
         paths:
-            - "backend/**"
+            - "backend/**" # Only trigger for backend folder changes
 
 jobs:
     deploy:
+        name: Deploy FastAPI and Conditional Tasks
         runs-on: ubuntu-latest
+
+        env:
+            SERVER_IP: ${{ secrets.SERVER_IP }}
+            SERVER_USER: ${{ secrets.SERVER_USER }}
+            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+            DOMAIN_NAME: ${{ secrets.VITE_DOMAIN_NAME }}
+            INSTALL_SSL: ${{ secrets.INSTALL_SSL }} # true / false
+            SETUP_NGINX: ${{ secrets.SETUP_NGINX }} # true / false
+            PROJECT_PATH: /var/www/spamclassifier
+            PM2_APP_NAME: spamclassifier-fastapi-service
 
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Copy backend files to server
-              uses: appleboy/scp-action@v0.1.7
-              with:
-                  host: ${{ secrets.SERVER_HOST }}
-                  username: ${{ secrets.SERVER_USER }}
-                  key: ${{ secrets.SSH_KEY }}
-                  source: "backend/*"
-                  target: "/home/ubuntu/app/backend"
+            - name: Set up SSH connection
+              run: |
+                  mkdir -p ~/.ssh
+                  echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+                  chmod 600 ~/.ssh/id_rsa
+                  ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
 
-            - name: Install & Restart FastAPI via PM2
-              uses: appleboy/ssh-action@v0.1.10
-              with:
-                  host: ${{ secrets.SERVER_HOST }}
-                  username: ${{ secrets.SERVER_USER }}
-                  key: ${{ secrets.SSH_KEY }}
-                  script: |
-                      cd /home/ubuntu/app/backend
-                      python3 -m venv venv
-                      source venv/bin/activate
-                      pip install -r requirements.txt
-                      pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js
-                      pm2 save
+            # -----------------------------------------------------------------
+            # 🧩 STEP 2: Setup NGINX Reverse Proxy (Conditional)
+            # -----------------------------------------------------------------
+            - name: Setup Nginx proxy if flag is true
+              if: env.SETUP_NGINX == 'true'
+              run: |
+                  echo "Setting up NGINX reverse proxy for $DOMAIN_NAME..."
+                  ssh $SERVER_USER@$SERVER_IP "bash -s" <<'REMOTE'
+                    set -e
+                    DOMAIN_NAME="${DOMAIN_NAME}"
+
+                    sudo apt-get update -y
+                    sudo apt-get install -y nginx
+
+                    # Create Nginx configuration in /etc/nginx/conf.d/
+                    sudo tee /etc/nginx/conf.d/$DOMAIN_NAME.conf > /dev/null <<EOF
+                    server {
+                        listen 80;
+                        server_name $DOMAIN_NAME;
+
+                        location / {
+                            proxy_pass http://127.0.0.1:8000;
+                            proxy_set_header Host \$host;
+                            proxy_set_header X-Real-IP \$remote_addr;
+                            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                        }
+                    }
+                    EOF
+
+                                # Test and restart Nginx
+                                sudo nginx -t
+                                sudo systemctl restart nginx
+                    REMOTE
+
+            # -----------------------------------------------------------------
+            # 🧩 STEP 1: Install SSL Certificate (Conditional)
+            # -----------------------------------------------------------------
+            - name: Install SSL certificate if flag is true
+              if: env.INSTALL_SSL == 'true'
+              run: |
+                  echo "Installing SSL certificate for $DOMAIN_NAME..."
+                  ssh $SERVER_USER@$SERVER_IP "
+                    sudo apt-get update -y &&
+                    sudo apt-get install -y certbot python3-certbot-nginx &&
+                    sudo certbot --nginx -d $DOMAIN_NAME --non-interactive --agree-tos -m saukse.store@gmail.com
+                  "
+
+            # -----------------------------------------------------------------
+            # 🧩 STEP 3: Deploy FastAPI App (Always runs for backend folder changes)
+            # -----------------------------------------------------------------
+            - name: Deploy FastAPI app using PM2
+              run: |
+                  echo "Deploying FastAPI app to server..."
+                  ssh $SERVER_USER@$SERVER_IP "
+                    sudo apt-get update -y &&
+                    sudo apt-get install -y python3-venv python3-pip pm2 git &&
+                    mkdir -p $PROJECT_PATH &&
+                    cd $PROJECT_PATH &&
+                    if [ ! -d .git ]; then
+                      git clone https://github.com/${{ github.repository }} .
+                    else
+                      git pull origin main
+                    fi &&
+                    cd backend &&
+                    python3 -m venv venv &&
+                    source venv/bin/activate &&
+                    pip install --upgrade pip &&
+                    pip install -r requirements.txt &&
+                    pm2 start uvicorn --name '$PM2_APP_NAME' -- 'main:app' --host 0.0.0.0 --port 8000 || pm2 restart '$PM2_APP_NAME' &&
+                    pm2 save
+                  "
