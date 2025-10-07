@@ -113,11 +113,17 @@ jobs:
                   pip install -r requirements.txt
 
                   # Start FastAPI with PM2
+
+                  VENV_PYTHON=venv/bin/python
+
                     if pm2 list | grep -q "$PM2_APP_NAME"; then
-                    pm2 restart "$PM2_APP_NAME"
+                        pm2 restart "$PM2_APP_NAME"
                     else
-                    pm2 start uvicorn --name "$PM2_APP_NAME" --interpreter python3 -- index:app --host 0.0.0.0 --port 8000
+                        pm2 start uvicorn --name "$PM2_APP_NAME" --interpreter $VENV_PYTHON -- index:app --host 0.0.0.0 --port 8000
                     fi
                     pm2 save
+
+
+                    
 
                   "
