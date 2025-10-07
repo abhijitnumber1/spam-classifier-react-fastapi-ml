@@ -94,18 +94,24 @@ jobs:
               run: |
                   echo "Deploying FastAPI app to server..."
                   ssh $SERVER_USER@$SERVER_IP "
-                    sudo mkdir -p $PROJECT_PATH &&
-                    cd $PROJECT_PATH &&
-                    if [ ! -d .git ]; then
+                  # Create folder with sudo and fix ownership
+                  sudo mkdir -p $PROJECT_PATH
+                  sudo chown -R $SERVER_USER:$SERVER_USER $PROJECT_PATH
+
+                  cd $PROJECT_PATH
+                  if [ ! -d .git ]; then
                       git clone https://github.com/${{ github.repository }} .
-                    else
+                  else
                       git pull origin main
-                    fi &&
-                    cd backend &&
-                    python3 -m venv venv &&
-                    source venv/bin/activate &&
-                    pip install --upgrade pip &&
-                    pip install -r requirements.txt &&
-                    pm2 start uvicorn --name '$PM2_APP_NAME' -- 'main:app' --host 0.0.0.0 --port 8000 || pm2 restart '$PM2_APP_NAME' &&
-                    pm2 save
+                  fi
+
+                  cd backend
+                  python3 -m venv venv
+                  source venv/bin/activate
+                  pip install --upgrade pip
+                  pip install -r requirements.txt
+
+                  # Start FastAPI with PM2
+                  pm2 start uvicorn --name '$PM2_APP_NAME' -- 'main:app' --host 0.0.0.0 --port 8000 || pm2 restart '$PM2_APP_NAME'
+                  pm2 save
                   "
