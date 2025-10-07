@@ -94,8 +94,6 @@ jobs:
               run: |
                   echo "Deploying FastAPI app to server..."
                   ssh $SERVER_USER@$SERVER_IP "
-                    sudo dnf update -y &&
-                    sudo dnf install -y python3-venv python3-pip pm2 git &&
                     mkdir -p $PROJECT_PATH &&
                     cd $PROJECT_PATH &&
                     if [ ! -d .git ]; then
