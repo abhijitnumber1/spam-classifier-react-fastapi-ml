@@ -46,8 +46,8 @@ jobs:
                     set -e
                     DOMAIN_NAME="${DOMAIN_NAME}"
 
-                    sudo apt-get update -y
-                    sudo apt-get install -y nginx
+                    sudo dnf update -y
+                    sudo dnf install -y nginx
 
                     # Create Nginx configuration in /etc/nginx/conf.d/
                     sudo tee /etc/nginx/conf.d/$DOMAIN_NAME.conf > /dev/null <<EOF
@@ -77,8 +77,8 @@ jobs:
               run: |
                   echo "Installing SSL certificate for $DOMAIN_NAME..."
                   ssh $SERVER_USER@$SERVER_IP "
-                    sudo apt-get update -y &&
-                    sudo apt-get install -y certbot python3-certbot-nginx &&
+                    sudo dnf update -y &&
+                    sudo dnf install -y certbot python3-certbot-nginx &&
                     sudo certbot --nginx -d $DOMAIN_NAME --non-interactive --agree-tos -m saukse.store@gmail.com
                   "
 
@@ -89,8 +89,8 @@ jobs:
               run: |
                   echo "Deploying FastAPI app to server..."
                   ssh $SERVER_USER@$SERVER_IP "
-                    sudo apt-get update -y &&
-                    sudo apt-get install -y python3-venv python3-pip pm2 git &&
+                    sudo dnf update -y &&
+                    sudo dnf install -y python3-venv python3-pip pm2 git &&
                     mkdir -p $PROJECT_PATH &&
                     cd $PROJECT_PATH &&
                     if [ ! -d .git ]; then
