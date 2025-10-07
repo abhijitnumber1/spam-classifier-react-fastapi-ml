@@ -30,9 +30,10 @@ jobs:
             - name: Set up SSH connection
               run: |
                   mkdir -p ~/.ssh
-                  echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+                  echo -e "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
                   chmod 600 ~/.ssh/id_rsa
                   ssh-keyscan -H $SERVER_IP >> ~/.ssh/known_hosts
+                  ssh -i ~/.ssh/id_rsa $SERVER_USER@$SERVER_IP "echo SSH connection OK"
 
             # -----------------------------------------------------------------
             # 🧩 STEP 2: Setup NGINX Reverse Proxy (Conditional)
