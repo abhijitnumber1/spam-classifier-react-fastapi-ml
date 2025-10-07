@@ -43,31 +43,31 @@ jobs:
               run: |
                   echo "Setting up NGINX reverse proxy for $DOMAIN_NAME..."
                   ssh $SERVER_USER@$SERVER_IP "bash -s" <<'REMOTE'
-                    set -e
-                    DOMAIN_NAME="${DOMAIN_NAME}"
+                  set -e
+                  DOMAIN_NAME="${DOMAIN_NAME}"
 
-                    sudo dnf update -y
-                    sudo dnf install -y nginx
+                  sudo dnf update -y
+                  sudo dnf install -y nginx
 
-                    # Create Nginx configuration in /etc/nginx/conf.d/
-                    sudo tee /etc/nginx/conf.d/$DOMAIN_NAME.conf > /dev/null <<EOF
-                    server {
-                        listen 80;
-                        server_name $DOMAIN_NAME;
+                  # Create Nginx configuration in /etc/nginx/conf.d/
+                  sudo tee /etc/nginx/conf.d/$DOMAIN_NAME.conf > /dev/null <<EOF
+                  server {
+                      listen 80;
+                      server_name $DOMAIN_NAME;
 
-                        location / {
-                            proxy_pass http://127.0.0.1:8000;
-                            proxy_set_header Host \$host;
-                            proxy_set_header X-Real-IP \$remote_addr;
-                            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-                        }
-                    }
-                    EOF
+                      location / {
+                          proxy_pass http://127.0.0.1:8000;
+                          proxy_set_header Host \$host;
+                          proxy_set_header X-Real-IP \$remote_addr;
+                          proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                      }
+                  }
+                  EOF
 
-                                # Test and restart Nginx
-                                sudo nginx -t
-                                sudo systemctl restart nginx
-                    REMOTE
+                  # Test and restart Nginx
+                  sudo nginx -t
+                  sudo systemctl restart nginx
+                  REMOTE
 
             # -----------------------------------------------------------------
             # 🧩 STEP 1: Install SSL Certificate (Conditional)
