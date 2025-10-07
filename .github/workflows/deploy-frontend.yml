@@ -40,5 +40,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: build
 
-      - name: Deploy to Domain
-        run: npm run deploy
+      - name: Show VITE_DOMAIN_NAME
+        run: |
+          cd frontend
+          echo "VITE_DOMAIN_NAME=$(cat .env.production)"
