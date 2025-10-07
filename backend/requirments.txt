@@ -2,4 +2,4 @@ fastapi
 uvicorn
 slowapi
 pydantic
-scikit-learn
+scikit-learn==1.7.2
