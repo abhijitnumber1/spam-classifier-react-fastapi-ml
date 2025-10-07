@@ -94,7 +94,7 @@ jobs:
               run: |
                   echo "Deploying FastAPI app to server..."
                   ssh $SERVER_USER@$SERVER_IP "
-                    mkdir -p $PROJECT_PATH &&
+                    sudo mkdir -p $PROJECT_PATH &&
                     cd $PROJECT_PATH &&
                     if [ ! -d .git ]; then
                       git clone https://github.com/${{ github.repository }} .
