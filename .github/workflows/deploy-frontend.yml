@@ -42,5 +42,4 @@ jobs:
 
       - name: Show VITE_DOMAIN_NAME
         run: |
-          cd frontend
           echo "VITE_DOMAIN_NAME=$(cat .env.production)"
