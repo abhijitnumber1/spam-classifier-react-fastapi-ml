@@ -93,37 +93,32 @@ jobs:
             - name: Deploy FastAPI app using PM2
               run: |
                   echo "Deploying FastAPI app to server..."
-                  ssh $SERVER_USER@$SERVER_IP "
-                  # Create folder with sudo and fix ownership
-                  sudo mkdir -p $PROJECT_PATH
-                  sudo chown -R $SERVER_USER:$SERVER_USER $PROJECT_PATH
+                    ssh $SERVER_USER@$SERVER_IP "
+                    # Create folder and fix ownership
+                    sudo mkdir -p $PROJECT_PATH
+                    sudo chown -R $SERVER_USER:$SERVER_USER $PROJECT_PATH
 
-                  cd $PROJECT_PATH
-                  if [ ! -d .git ]; then
-                      git clone https://github.com/${{ github.repository }} .
-                  else
-                      git pull origin main
-                  fi
-
-                  cd backend
-                  ls -la
-                  python3 -m venv venv
-                  source venv/bin/activate
-                  pip install --upgrade pip
-                  pip install -r requirments.txt
-
-                  # Start FastAPI with PM2
-
-                  VENV_PYTHON=venv/bin/python
-
-                    if pm2 list | grep -q "$PM2_APP_NAME"; then
-                        pm2 restart "$PM2_APP_NAME"
+                    cd $PROJECT_PATH
+                    if [ ! -d .git ]; then
+                        git clone https://github.com/${{ github.repository }} .
                     else
-                        pm2 start uvicorn --name "$PM2_APP_NAME" --interpreter $VENV_PYTHON -- index:app --host 0.0.0.0 --port 8000
+                        git pull origin main
+                    fi
+
+                    cd backend
+                    ls -la
+                    python3 -m venv venv
+                    source venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirments.txt
+
+                    # Start FastAPI with PM2 under virtual environment
+                    VENV_PYTHON=venv/bin/python
+
+                    if pm2 list | grep -q \"$PM2_APP_NAME\"; then
+                        pm2 restart \"$PM2_APP_NAME\"
+                    else
+                        pm2 start uvicorn --name \"$PM2_APP_NAME\" --interpreter $VENV_PYTHON -- index:app --host 0.0.0.0 --port 8000
                     fi
                     pm2 save
-
-
-                    
-
-                  "
+                    "
